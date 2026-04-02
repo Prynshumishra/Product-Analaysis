@@ -365,6 +365,15 @@ The frontend follows scalable domain separation:
 4. Set environment variable:
    - `VITE_API_URL=<your-backend-url>`
 
+
+
+👨‍💻 Author
+
+Priyanshu Mishra
+
+Final Year B.Tech – Information Technology
+Madan Mohan Malaviya University of Technology (MMMUT)
+
 ## Short Essay: Scaling to 1 Million Write Events/Minute
 
 If this dashboard needed to handle around 1 million write events per minute, I wouldn’t rely on direct synchronous database writes anymore because that would quickly become a bottleneck.
@@ -372,14 +381,15 @@ Instead, I’d move to an event-driven architecture. The API layer would stay li
 From there, background consumers would process these events asynchronously and write them into databases optimized for analytics, such as ClickHouse or TimescaleDB. Meanwhile, PostgreSQL would be reserved strictly for transactional data like users and authentication, keeping it fast and reliable.
 To make the dashboard responsive, I’d introduce real-time or near real-time aggregations using stream processing, so we’re not querying raw high-volume data every time. Frequently accessed or “hot” data would be cached in Redis, which significantly improves read performance.
 I’d also separate concerns by having a dedicated query service for the dashboard. This way, data ingestion and data visualization can scale independently without affecting each other.
+
 For reliability at scale, I’d add things like:
 
-Partitioning to distribute load efficiently
+1. Partitioning to distribute load efficiently
 
-Idempotency to avoid duplicate processing
+2. Idempotency to avoid duplicate processing
 
-Retries and dead-letter queues for failure handling
+3. Retries and dead-letter queues for failure handling
 
-Autoscaling consumers based on load
+4. Autoscaling consumers based on load
 
 Finally, I’d ensure strong observability—tracking metrics like latency, queue lag, and error rates, along with setting up alerts based on SLOs—so the system remains stable, fast, and reliable even under heavy traffic.
