@@ -2,6 +2,10 @@
 
 Production-grade full stack application that tracks its own usage events and visualizes them in real-time analytics charts.
 
+## Live Demo
+
+- Frontend: https://product-analaysis.vercel.app/
+
 ## Core Concept
 
 This dashboard is self-analytics driven.
@@ -361,40 +365,18 @@ The frontend follows scalable domain separation:
 4. Set environment variable:
    - `VITE_API_URL=<your-backend-url>`
 
-## System Design: Scaling to 1 Million Write Events/Minute
+## Short Essay: Scaling to 1 Million Write Events/Minute
 
-If this system must ingest ~1,000,000 write events per minute, use an event-driven architecture:
+If this dashboard needed to handle around 1 million write events per minute, I wouldn’t rely on direct synchronous database writes anymore because that would quickly become a bottleneck.
+Instead, I’d move to an event-driven architecture. The API layer would stay lightweight—its job would be to quickly validate and authenticate incoming requests, and then push those events into a durable message queue like Kafka. This ensures the system can handle sudden spikes without slowing down.
+From there, background consumers would process these events asynchronously and write them into databases optimized for analytics, such as ClickHouse or TimescaleDB. Meanwhile, PostgreSQL would be reserved strictly for transactional data like users and authentication, keeping it fast and reliable.
+To make the dashboard responsive, I’d introduce real-time or near real-time aggregations using stream processing, so we’re not querying raw high-volume data every time. Frequently accessed or “hot” data would be cached in Redis, which significantly improves read performance.
+I’d also separate concerns by having a dedicated query service for the dashboard. This way, data ingestion and data visualization can scale independently without affecting each other.
+For reliability at scale, I’d add things like:
 
-1. Introduce message queues.
-   - Frontend/API writes events to Kafka or RabbitMQ instead of directly to PostgreSQL synchronously.
-   - This absorbs traffic spikes and protects upstream services.
+Partitioning to distribute load efficiently
+Idempotency to avoid duplicate processing
+Retries and dead-letter queues for failure handling
+Autoscaling consumers based on load
 
-2. Split ingestion and analytics into microservices.
-   - Auth/API Gateway service
-   - Event Ingestion service
-   - Stream Processing service
-   - Analytics Query service
-
-3. Use batch and stream processing.
-   - Stream jobs aggregate rolling counts by feature/time windows.
-   - Batch jobs generate historical aggregates and compact cold data.
-
-4. Add high-write data stores.
-   - Keep PostgreSQL for transactional/auth workloads.
-   - Use NoSQL/time-series stores (ClickHouse, Cassandra, BigQuery, or TimescaleDB) for event-scale analytics.
-
-5. Add caching.
-   - Redis for hot analytics queries and filter combinations.
-   - Cache invalidation via stream updates or TTL.
-
-6. Build data pipelines.
-   - Kafka -> stream processor -> OLAP/warehouse.
-   - Separate real-time serving path and offline BI/reporting path.
-
-7. Operational hardening.
-   - Partitioning/sharding by time and tenant.
-   - Idempotent event keys.
-   - Backpressure, retries, dead-letter queues.
-   - Observability: metrics, traces, log correlation, SLO alerting.
-
-This approach decouples writes from reads, supports burst traffic, and keeps analytics queries fast at scale.
+Finally, I’d ensure strong observability—tracking metrics like latency, queue lag, and error rates, along with setting up alerts based on SLOs—so the system remains stable, fast, and reliable even under heavy traffic.
