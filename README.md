@@ -375,8 +375,11 @@ I’d also separate concerns by having a dedicated query service for the dashboa
 For reliability at scale, I’d add things like:
 
 Partitioning to distribute load efficiently
+
 Idempotency to avoid duplicate processing
+
 Retries and dead-letter queues for failure handling
+
 Autoscaling consumers based on load
 
 Finally, I’d ensure strong observability—tracking metrics like latency, queue lag, and error rates, along with setting up alerts based on SLOs—so the system remains stable, fast, and reliable even under heavy traffic.
