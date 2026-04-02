@@ -14,6 +14,9 @@ const shutdown = async (signal) => {
     process.exit(0);
   });
 };
+app.get("/", (req, res) => {
+  res.send("🚀 Product Analytics API is running");
+});
 
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
